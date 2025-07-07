@@ -1,32 +1,39 @@
 use anyhow::Result;
 use std::time::{Duration, Instant};
 
+use crate::engine::input::InputState;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum LoopState {
     Continue,
     Exit(i32),
 }
 
-pub type UpdateFn<Game> = fn(&mut Game) -> Result<LoopState>;
+pub type UpdateFn<Game, InputGame> = fn(&mut Game, &mut InputGame) -> Result<LoopState>;
 
-pub type RenderFn<Game> = fn(&mut Game, Duration) -> Result<LoopState>;
+pub type RenderFn<Game, InputGame> = fn(&mut Game, &mut InputGame, Duration) -> Result<LoopState>;
 
-pub struct RenderLoop<'a, Game> {
+pub struct RenderLoop<'a, Game, InputGame: InputState> {
     accumulator: Duration,
     current_time: Instant,
     last_time: Instant,
     update_timestep: Duration,
     game: &'a mut Game,
-    update: UpdateFn<Game>,
-    render: RenderFn<Game>,
+    pub input: &'a mut InputGame,
+    update: UpdateFn<Game, InputGame>,
+    render: RenderFn<Game, InputGame>,
 }
 
-impl<'a, Game> RenderLoop<'a, Game> {
+impl<'a, Game, InputGame> RenderLoop<'a, Game, InputGame>
+where
+    InputGame: InputState,
+{
     pub fn new(
         fps: usize,
         game: &'a mut Game,
-        update: UpdateFn<Game>,
-        render: RenderFn<Game>,
+        input: &'a mut InputGame,
+        update: UpdateFn<Game, InputGame>,
+        render: RenderFn<Game, InputGame>,
     ) -> Self {
         if fps == 0 {
             panic!("must be > 0");
@@ -37,6 +44,7 @@ impl<'a, Game> RenderLoop<'a, Game> {
             last_time: Instant::now(),
             update_timestep: Duration::from_nanos((1_000_000_000f64 / fps as f64).round() as u64),
             game,
+            input,
             update,
             render,
         }
@@ -52,14 +60,19 @@ impl<'a, Game> RenderLoop<'a, Game> {
         }
 
         while self.accumulator > self.update_timestep {
-            let next = (self.update)(&mut self.game)?;
+            let next = (self.input).next()?;
+            if let LoopState::Exit(..) = next {
+                return Ok(next);
+            }
+
+            let next = (self.update)(&mut self.game, self.input)?;
             if let LoopState::Exit(..) = next {
                 return Ok(next);
             }
             self.accumulator -= self.update_timestep;
         }
 
-        let next = (self.render)(&mut self.game, delta_time)?;
+        let next = (self.render)(&mut self.game, self.input, delta_time)?;
         if let LoopState::Exit(..) = next {
             return Ok(next);
         }
@@ -73,10 +86,12 @@ impl<'a, Game> RenderLoop<'a, Game> {
     }
 
     pub fn on_start(&mut self) -> Result<()> {
+        self.input.start()?;
         Ok(())
     }
 
     pub fn on_end(&mut self, code: i32) -> Result<()> {
+        self.input.end()?;
         std::process::exit(code)
     }
 }

@@ -1,17 +1,21 @@
 use crate::engine::{
+    input::InputState,
     render_loop::{LoopState, RenderLoop},
     window::WindowWrapper,
 };
 use anyhow::Context;
 
-pub struct World<'a, Game> {
-    render_loop: &'a mut RenderLoop<'a, Game>,
+pub struct World<'a, Game, InputGame: InputState> {
+    render_loop: &'a mut RenderLoop<'a, Game, InputGame>,
     window_wrapper: WindowWrapper<'a>,
 }
 
-impl<'a, Game> World<'a, Game> {
+impl<'a, Game, InputGame> World<'a, Game, InputGame>
+where
+    InputGame: InputState,
+{
     pub fn new(
-        render_loop: &'a mut RenderLoop<'a, Game>,
+        render_loop: &'a mut RenderLoop<'a, Game, InputGame>,
         window_wrapper: WindowWrapper<'a>,
     ) -> Self {
         Self {
@@ -26,6 +30,8 @@ impl<'a, Game> World<'a, Game> {
         while !self.window_wrapper.is_open() {
             self.window_wrapper.set_poll_events();
 
+            self.render_loop.input.init();
+
             let next = self.render_loop.on_loop().context("on loop").unwrap();
 
             if let LoopState::Exit(c) = next {
@@ -35,6 +41,7 @@ impl<'a, Game> World<'a, Game> {
             }
 
             for (_, event) in glfw::flush_messages(&self.window_wrapper.events()) {
+                self.render_loop.input.handle_event(&event);
                 match event {
                     glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) => {
                         self.render_loop.on_end(code).context("on end").unwrap();

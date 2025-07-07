@@ -1,22 +1,22 @@
 pub mod engine;
 
-use glfw::fail_on_errors;
-
-//use crate::engine::state::Game;
+use crate::engine::input::InputState;
 use crate::engine::world::World;
 use crate::engine::{
     render_loop::{RenderFn, RenderLoop, UpdateFn},
     window::WindowWrapper,
 };
+use glfw::fail_on_errors;
 
-pub async fn run<'a, Game>(
+pub async fn run<'a, Game, InputGame: InputState>(
     fps: usize,
     width: usize,
     height: usize,
     title: &str,
     game: &'a mut Game,
-    update: UpdateFn<Game>,
-    render: RenderFn<Game>,
+    input: &'a mut InputGame,
+    update: UpdateFn<Game, InputGame>,
+    render: RenderFn<Game, InputGame>,
 ) {
     let mut glfw = glfw::init(glfw::fail_on_errors!()).unwrap();
 
@@ -31,7 +31,7 @@ pub async fn run<'a, Game>(
 
     let window_wrapper: WindowWrapper = WindowWrapper::new(&mut glfw, &events, &mut window);
 
-    let mut render_loop = RenderLoop::<Game>::new(fps, game, update, render);
+    let mut render_loop = RenderLoop::<Game, InputGame>::new(fps, game, input, update, render);
 
     let mut world = World::new(&mut render_loop, window_wrapper);
     world.run();
