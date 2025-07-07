@@ -18,7 +18,7 @@ pub async fn run(fps: usize, width: usize, height: usize, title: &str) {
             glfw::WindowMode::Windowed,
         )
         .unwrap();
-    let mut game = Game::new().await;
+    let mut game = Game::new();
 
     let window_wrapper: WindowWrapper = WindowWrapper::new(&mut glfw, &events, &mut window);
 

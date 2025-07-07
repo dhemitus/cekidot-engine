@@ -8,7 +8,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub async fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             update_called: 0,
             render_called: 0,
