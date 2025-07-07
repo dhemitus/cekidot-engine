@@ -7,7 +7,7 @@ use std::time::Duration;
 use crate::engine::render_loop::{LoopState, RenderLoop, WindowWrapper};
 use crate::engine::state::Game;
 
-pub async fn run(fps: usize, width: usize, height: usize, title: &str) {
+pub async fn run<'a>(fps: usize, width: usize, height: usize, title: &str, game: &'a mut Game) {
     let mut glfw = glfw::init(glfw::fail_on_errors!()).unwrap();
 
     let (mut window, events) = glfw
@@ -18,13 +18,13 @@ pub async fn run(fps: usize, width: usize, height: usize, title: &str) {
             glfw::WindowMode::Windowed,
         )
         .unwrap();
-    let mut game = Game::new();
+    //let mut game = Game::new();
 
     let window_wrapper: WindowWrapper = WindowWrapper::new(&mut glfw, &events, &mut window);
 
     let mut render_loop = RenderLoop::new(
         fps,
-        &mut game,
+        game,
         |s| -> Result<LoopState> {
             s.update_called += 1;
             Ok(LoopState::Continue)

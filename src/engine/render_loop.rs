@@ -14,7 +14,7 @@ pub type UpdateFn = fn(&mut Game) -> Result<LoopState>;
 pub type RenderFn = fn(&mut Game, Duration) -> Result<LoopState>;
 
 pub struct WindowWrapper<'a> {
-    pub glfw: &'a mut Glfw,
+    glfw: &'a mut Glfw,
     pub events: &'a GlfwReceiver<(f64, WindowEvent)>,
     pub window: &'a mut Window,
 }
