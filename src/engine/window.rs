@@ -5,6 +5,7 @@ pub struct WindowWrapper<'a> {
     events: &'a GlfwReceiver<(f64, WindowEvent)>,
     window: &'a mut Window,
 }
+
 impl<'a> WindowWrapper<'a> {
     pub fn new(
         glfw: &'a mut Glfw,

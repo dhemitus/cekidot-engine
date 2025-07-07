@@ -1,4 +1,3 @@
-use crate::engine::state::Game;
 use anyhow::Result;
 use std::time::{Duration, Instant};
 
@@ -8,22 +7,27 @@ pub enum LoopState {
     Exit(i32),
 }
 
-pub type UpdateFn = fn(&mut Game) -> Result<LoopState>;
+pub type UpdateFn<Game> = fn(&mut Game) -> Result<LoopState>;
 
-pub type RenderFn = fn(&mut Game, Duration) -> Result<LoopState>;
+pub type RenderFn<Game> = fn(&mut Game, Duration) -> Result<LoopState>;
 
-pub struct RenderLoop<'a> {
+pub struct RenderLoop<'a, Game> {
     accumulator: Duration,
     current_time: Instant,
     last_time: Instant,
     update_timestep: Duration,
     game: &'a mut Game,
-    update: UpdateFn,
-    render: RenderFn,
+    update: UpdateFn<Game>,
+    render: RenderFn<Game>,
 }
 
-impl<'a> RenderLoop<'a> {
-    pub fn new(fps: usize, game: &'a mut Game, update: UpdateFn, render: RenderFn) -> Self {
+impl<'a, Game> RenderLoop<'a, Game> {
+    pub fn new(
+        fps: usize,
+        game: &'a mut Game,
+        update: UpdateFn<Game>,
+        render: RenderFn<Game>,
+    ) -> Self {
         if fps == 0 {
             panic!("must be > 0");
         }
@@ -32,7 +36,7 @@ impl<'a> RenderLoop<'a> {
             current_time: Instant::now(),
             last_time: Instant::now(),
             update_timestep: Duration::from_nanos((1_000_000_000f64 / fps as f64).round() as u64),
-            game: game,
+            game,
             update,
             render,
         }
@@ -61,6 +65,11 @@ impl<'a> RenderLoop<'a> {
         }
         self.accumulator += delta_time;
         Ok(LoopState::Continue)
+    }
+
+    pub fn on_resize(&mut self) {
+        //    self.game.resize(100, 100);
+        //todo!()
     }
 
     pub fn on_start(&mut self) -> Result<()> {

@@ -15,4 +15,6 @@ impl Game {
             time_passed: Duration::default(),
         }
     }
+
+    pub fn resize(&self, width: u32, height: u32) {}
 }

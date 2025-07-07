@@ -4,13 +4,16 @@ use crate::engine::{
 };
 use anyhow::Context;
 
-pub struct World<'a> {
-    render_loop: &'a mut RenderLoop<'a>,
+pub struct World<'a, Game> {
+    render_loop: &'a mut RenderLoop<'a, Game>,
     window_wrapper: WindowWrapper<'a>,
 }
 
-impl<'a> World<'a> {
-    pub fn new(render_loop: &'a mut RenderLoop<'a>, window_wrapper: WindowWrapper<'a>) -> Self {
+impl<'a, Game> World<'a, Game> {
+    pub fn new(
+        render_loop: &'a mut RenderLoop<'a, Game>,
+        window_wrapper: WindowWrapper<'a>,
+    ) -> Self {
         Self {
             render_loop,
             window_wrapper,
@@ -40,11 +43,13 @@ impl<'a> World<'a> {
                         self.window_wrapper.close();
                     }
 
-                    /*glfw::WindowEvent::Pos(..) => {
-                        state.update_surface();
-                        state.resize(state.context.size);
+                    glfw::WindowEvent::Pos(..) => {
+                        self.render_loop.on_resize();
+                        //state.update_surface();
+                        //state.resize(state.context.size);
                     }
-                    glfw::WindowEvent::FramebufferSize(width, height) => {
+                    /*glfw::WindowEvent::FramebufferSize(width, height) => {
+
                         state.update_surface();
                         state.resize((width, height));
                     }*/
