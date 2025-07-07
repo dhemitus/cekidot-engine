@@ -75,14 +75,23 @@ impl<'a> RenderLoop<'a> {
 
     pub fn on_run(&mut self) {
         self.on_start().context("on start").unwrap();
+        let mut code = 0i32;
         while !self.is_window_open() {
             self.window_wrapper.glfw.poll_events();
 
-            let _ = self.on_loop().context("on loop").unwrap();
+            let next = self.on_loop().context("on loop").unwrap();
+
+            if let LoopState::Exit(c) = next {
+                code = c;
+                self.close_window();
+                return;
+            }
 
             for (_, event) in glfw::flush_messages(&self.window_wrapper.events) {
                 match event {
                     glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) => {
+                        self.on_end(code).context("on end").unwrap();
+                        code = 0;
                         self.close_window();
                     }
 
