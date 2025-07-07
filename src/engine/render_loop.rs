@@ -1,6 +1,5 @@
-use crate::Game;
-use anyhow::{Context, Result};
-use glfw::{Context as OtherContext, Glfw, GlfwReceiver, Window, WindowEvent};
+use crate::engine::state::Game;
+use anyhow::Result;
 use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -13,32 +12,6 @@ pub type UpdateFn = fn(&mut Game) -> Result<LoopState>;
 
 pub type RenderFn = fn(&mut Game, Duration) -> Result<LoopState>;
 
-pub struct WindowWrapper<'a> {
-    glfw: &'a mut Glfw,
-    pub events: &'a GlfwReceiver<(f64, WindowEvent)>,
-    pub window: &'a mut Window,
-}
-impl<'a> WindowWrapper<'a> {
-    pub fn new(
-        glfw: &'a mut Glfw,
-        events: &'a GlfwReceiver<(f64, WindowEvent)>,
-        window: &'a mut Window,
-    ) -> Self {
-        window.set_framebuffer_size_polling(true);
-        window.set_key_polling(true);
-        window.set_mouse_button_polling(true);
-        window.set_pos_polling(true);
-        window.set_cursor_mode(glfw::CursorMode::Hidden);
-        window.make_current();
-
-        Self {
-            glfw,
-            events,
-            window,
-        }
-    }
-}
-
 pub struct RenderLoop<'a> {
     accumulator: Duration,
     current_time: Instant,
@@ -47,17 +20,10 @@ pub struct RenderLoop<'a> {
     game: &'a mut Game,
     update: UpdateFn,
     render: RenderFn,
-    window_wrapper: WindowWrapper<'a>,
 }
 
 impl<'a> RenderLoop<'a> {
-    pub fn new(
-        fps: usize,
-        game: &'a mut Game,
-        update: UpdateFn,
-        render: RenderFn,
-        window_wrapper: WindowWrapper<'a>,
-    ) -> Self {
+    pub fn new(fps: usize, game: &'a mut Game, update: UpdateFn, render: RenderFn) -> Self {
         if fps == 0 {
             panic!("must be > 0");
         }
@@ -69,47 +35,10 @@ impl<'a> RenderLoop<'a> {
             game: game,
             update,
             render,
-            window_wrapper,
         }
     }
 
-    pub fn on_run(&mut self) {
-        self.on_start().context("on start").unwrap();
-        let mut code = 0i32;
-        while !self.is_window_open() {
-            self.window_wrapper.glfw.poll_events();
-
-            let next = self.on_loop().context("on loop").unwrap();
-
-            if let LoopState::Exit(c) = next {
-                code = c;
-                self.close_window();
-                return;
-            }
-
-            for (_, event) in glfw::flush_messages(&self.window_wrapper.events) {
-                match event {
-                    glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) => {
-                        self.on_end(code).context("on end").unwrap();
-                        code = 0;
-                        self.close_window();
-                    }
-
-                    /*glfw::WindowEvent::Pos(..) => {
-                        state.update_surface();
-                        state.resize(state.context.size);
-                    }
-                    glfw::WindowEvent::FramebufferSize(width, height) => {
-                        state.update_surface();
-                        state.resize((width, height));
-                    }*/
-                    _ => {}
-                }
-            }
-        }
-    }
-
-    fn on_loop(&mut self) -> Result<LoopState> {
+    pub fn on_loop(&mut self) -> Result<LoopState> {
         self.last_time = self.current_time;
         self.current_time = Instant::now();
 
@@ -134,19 +63,11 @@ impl<'a> RenderLoop<'a> {
         Ok(LoopState::Continue)
     }
 
-    pub fn close_window(&mut self) {
-        self.window_wrapper.window.set_should_close(true);
-    }
-
-    pub fn is_window_open(&mut self) -> bool {
-        self.window_wrapper.window.should_close()
-    }
-
-    fn on_start(&mut self) -> Result<()> {
+    pub fn on_start(&mut self) -> Result<()> {
         Ok(())
     }
 
-    fn on_end(&mut self, code: i32) -> Result<()> {
+    pub fn on_end(&mut self, code: i32) -> Result<()> {
         std::process::exit(code)
     }
 }

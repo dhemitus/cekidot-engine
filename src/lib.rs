@@ -1,13 +1,23 @@
 pub mod engine;
 
-use anyhow::Result;
 use glfw::fail_on_errors;
-use std::time::Duration;
 
-use crate::engine::render_loop::{LoopState, RenderLoop, WindowWrapper};
 use crate::engine::state::Game;
+use crate::engine::world::World;
+use crate::engine::{
+    render_loop::{RenderFn, RenderLoop, UpdateFn},
+    window::WindowWrapper,
+};
 
-pub async fn run<'a>(fps: usize, width: usize, height: usize, title: &str, game: &'a mut Game) {
+pub async fn run<'a>(
+    fps: usize,
+    width: usize,
+    height: usize,
+    title: &str,
+    game: &'a mut Game,
+    update: UpdateFn,
+    render: RenderFn,
+) {
     let mut glfw = glfw::init(glfw::fail_on_errors!()).unwrap();
 
     let (mut window, events) = glfw
@@ -18,36 +28,11 @@ pub async fn run<'a>(fps: usize, width: usize, height: usize, title: &str, game:
             glfw::WindowMode::Windowed,
         )
         .unwrap();
-    //let mut game = Game::new();
 
     let window_wrapper: WindowWrapper = WindowWrapper::new(&mut glfw, &events, &mut window);
 
-    let mut render_loop = RenderLoop::new(
-        fps,
-        game,
-        |s| -> Result<LoopState> {
-            s.update_called += 1;
-            Ok(LoopState::Continue)
-        },
-        |s, d| -> Result<LoopState> {
-            s.render_called += 1;
-            s.time_passed += d;
+    let mut render_loop = RenderLoop::new(fps, game, update, render);
 
-            if s.time_passed > Duration::from_secs(1) {
-                println!("update fps: {:.2}", s.update_called as f64 / 1f64);
-                println!("render fps: {:.2}", s.render_called as f64 / 1f64);
-
-                s.update_called = 0;
-                s.render_called = 0;
-                s.time_passed = Duration::default();
-            }
-
-            std::thread::sleep(Duration::from_millis(4));
-
-            Ok(LoopState::Continue)
-        },
-        window_wrapper,
-    );
-
-    render_loop.on_run();
+    let mut world = World::new(&mut render_loop, window_wrapper);
+    world.run();
 }
