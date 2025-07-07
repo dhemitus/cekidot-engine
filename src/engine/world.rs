@@ -16,9 +16,7 @@ impl<'a> World<'a> {
             window_wrapper,
         }
     }
-}
 
-impl<'a> World<'a> {
     pub fn run(&mut self) {
         self.render_loop.on_start().context("on start").unwrap();
         let mut code = 0i32;
