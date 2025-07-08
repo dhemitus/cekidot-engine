@@ -1,11 +1,11 @@
-use crate::engine::input::{InputState, KeyboardKey, KeyboardState};
+use crate::engine::input::{InputState, KeyboardAction, KeyboardKey, KeyboardState};
 use crate::engine::render_loop::LoopState;
 use glfw::Action;
 use glfw::Key;
 use glfw::WindowEvent;
 use std::collections::HashSet;
 
-fn key_mapping(key: Key) -> Option<KeyboardKey> {
+pub fn key_mapping(key: Key) -> Option<KeyboardKey> {
     match key {
         Key::Escape => Some(KeyboardKey::Escape),
         Key::A => Some(KeyboardKey::A),
@@ -17,6 +17,13 @@ fn key_mapping(key: Key) -> Option<KeyboardKey> {
     }
 }
 
+pub fn action_mapping(action: Action) -> KeyboardAction {
+    match action {
+        Action::Press => KeyboardAction::PRESS,
+        _ => KeyboardAction::ELSE,
+    }
+}
+
 pub trait GlfwHandleState {}
 
 pub struct GlfwInputState {
@@ -24,6 +31,7 @@ pub struct GlfwInputState {
     key_pressed_update: HashSet<KeyboardKey>,
     key_released_update: HashSet<KeyboardKey>,
     clear_key: bool,
+    key_action: Option<(KeyboardAction, Key)>,
 }
 
 impl GlfwInputState {
@@ -33,37 +41,49 @@ impl GlfwInputState {
             key_pressed_update: HashSet::new(),
             key_released_update: HashSet::new(),
             clear_key: true,
+            key_action: None,
         }
     }
 }
 
 impl InputState for GlfwInputState {
-    fn init(&mut self) {
+    /*pub(crate)*/
+    fn handle_event(&mut self) {
         if self.clear_key {
             self.key_pressed_update.clear();
             self.key_released_update.clear();
             self.clear_key = false;
         }
-    }
-    /*pub(crate)*/
-    fn handle_event(&mut self, event: &WindowEvent) {
-        match event {
-            WindowEvent::Key(k, _, a, _) => {
-                if *a == Action::Press {
-                    if let Some(k) = key_mapping(*k) {
-                        if !self.key_down.contains(&k) {
-                            self.key_pressed_update.insert(k);
+
+        match self.key_action {
+            Some(ak) => match ak {
+                (a, k) => {
+                    if a == KeyboardAction::PRESS {
+                        if let Some(k) = key_mapping(k) {
+                            if !self.key_down.contains(&k) {
+                                self.key_pressed_update.insert(k);
+                            }
+                            self.key_down.insert(k);
                         }
-                        self.key_down.insert(k);
-                    }
-                } else {
-                    if let Some(k) = key_mapping(*k) {
-                        if self.key_down.contains(&k) {
-                            self.key_released_update.insert(k);
+                    } else {
+                        if let Some(k) = key_mapping(k) {
+                            if self.key_down.contains(&k) {
+                                self.key_released_update.insert(k);
+                            }
+                            self.key_down.remove(&k);
                         }
-                        self.key_down.remove(&k);
                     }
                 }
+                _ => {}
+            },
+            None => {}
+        }
+    }
+
+    fn set_event(&mut self, event: &WindowEvent) {
+        match event {
+            WindowEvent::Key(k, _, a, _) => {
+                self.key_action = Some((action_mapping(*a), *k));
             }
             _ => {}
         }
@@ -75,6 +95,7 @@ impl InputState for GlfwInputState {
 
     fn next(&mut self) -> anyhow::Result<LoopState> {
         self.clear_key = true;
+
         Ok(LoopState::Continue)
     }
 

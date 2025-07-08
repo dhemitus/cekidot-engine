@@ -30,8 +30,7 @@ where
         while !self.window_wrapper.is_open() {
             self.window_wrapper.set_poll_events();
 
-            self.render_loop.input.init();
-
+            self.render_loop.input.handle_event();
             let next = self.render_loop.on_loop().context("on loop").unwrap();
 
             if let LoopState::Exit(c) = next {
@@ -41,7 +40,7 @@ where
             }
 
             for (_, event) in glfw::flush_messages(&self.window_wrapper.events()) {
-                self.render_loop.input.handle_event(&event);
+                self.render_loop.input.set_event(&event);
                 match event {
                     glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) => {
                         self.render_loop.on_end(code).context("on end").unwrap();
