@@ -8,6 +8,7 @@ use std::collections::HashSet;
 pub fn key_mapping(key: Key) -> Option<KeyboardKey> {
     match key {
         Key::Escape => Some(KeyboardKey::Escape),
+        Key::Space => Some(KeyboardKey::SPACE),
         Key::A => Some(KeyboardKey::A),
         Key::D => Some(KeyboardKey::D),
         Key::S => Some(KeyboardKey::S),
@@ -27,6 +28,7 @@ pub fn action_mapping(action: Action) -> KeyboardAction {
 pub trait GlfwHandleState {}
 
 pub struct GlfwInputState {
+    pub key_active: HashSet<KeyboardKey>,
     key_down: HashSet<KeyboardKey>,
     key_pressed_update: HashSet<KeyboardKey>,
     key_released_update: HashSet<KeyboardKey>,
@@ -37,6 +39,7 @@ pub struct GlfwInputState {
 impl GlfwInputState {
     pub fn new() -> Self {
         Self {
+            key_active: HashSet::new(),
             key_down: HashSet::new(),
             key_pressed_update: HashSet::new(),
             key_released_update: HashSet::new(),
@@ -47,7 +50,6 @@ impl GlfwInputState {
 }
 
 impl InputState for GlfwInputState {
-    /*pub(crate)*/
     fn handle_event(&mut self) {
         if self.clear_key {
             self.key_pressed_update.clear();
@@ -65,7 +67,7 @@ impl InputState for GlfwInputState {
                             }
                             self.key_down.insert(k);
                         }
-                    } else {
+                    } else if a == KeyboardAction::ELSE || a == KeyboardAction::RELEASE {
                         if let Some(k) = key_mapping(k) {
                             if self.key_down.contains(&k) {
                                 self.key_released_update.insert(k);
@@ -77,6 +79,23 @@ impl InputState for GlfwInputState {
                 _ => {}
             },
             None => {}
+        }
+    }
+
+    fn get_event(&mut self, event: &WindowEvent) {
+        match event {
+            WindowEvent::Key(k, _, a, _) => {
+                if *a == Action::Press {
+                    if let Some(k) = key_mapping(*k) {
+                        self.key_active.insert(k);
+                    }
+                } else if *a == Action::Release {
+                    if let Some(k) = key_mapping(*k) {
+                        self.key_active.remove(&k);
+                    }
+                }
+            }
+            _ => {}
         }
     }
 
@@ -111,6 +130,10 @@ impl KeyboardState for GlfwInputState {
 
     fn is_key_down(&self, key: KeyboardKey) -> bool {
         self.key_down.contains(&key)
+    }
+
+    fn is_key_active(&self, key: KeyboardKey) -> bool {
+        self.key_active.contains(&key)
     }
 
     fn is_key_released(&self, key: KeyboardKey) -> bool {

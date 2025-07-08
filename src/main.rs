@@ -26,8 +26,8 @@ impl GameOn {
 fn update(g: &mut GameOn, i: &mut GlfwInputState) -> Result<LoopState> {
     g.update_called += 1;
 
-    if i.is_key_down(KeyboardKey::A) {
-        println!("downed {:?} {}", KeyboardKey::A, g.adding);
+    if i.is_key_active(KeyboardKey::A) {
+        println!("active {:?} {}", KeyboardKey::A, g.adding);
         g.adding += 1;
     }
 
@@ -61,7 +61,7 @@ fn main() {
         120,
         1024,
         768,
-        "glfw loop",
+        "glfw input",
         &mut game,
         &mut input,
         update,
