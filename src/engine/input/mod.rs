@@ -89,7 +89,7 @@ pub trait KeyboardState {
 pub trait InputState: KeyboardState {
     fn handle_event(&mut self);
     fn event(&mut self, event: Option<EventState>);
-    fn start(&mut self) -> Result<()>;
-    fn next(&mut self) -> Result<LoopState>;
-    fn end(&mut self) -> Result<()>;
+    fn on_start(&mut self) -> Result<()>;
+    fn on_next(&mut self) -> Result<LoopState>;
+    fn on_end(&mut self) -> Result<()>;
 }

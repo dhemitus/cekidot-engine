@@ -101,7 +101,7 @@ pub struct GlfwInputState {
     key_pressed_update: HashSet<KeyboardKey>,
     key_released_update: HashSet<KeyboardKey>,
     clear_key: bool,
-    key_action: Option<EventState>,
+    pub event: Option<EventState>,
 }
 
 impl GlfwInputState {
@@ -111,7 +111,7 @@ impl GlfwInputState {
             key_pressed_update: HashSet::new(),
             key_released_update: HashSet::new(),
             clear_key: true,
-            key_action: None,
+            event: None,
         }
     }
 }
@@ -124,8 +124,8 @@ impl InputState for GlfwInputState {
             self.clear_key = false;
         }
 
-        match &self.key_action {
-            Some(ak) => match ak {
+        match &self.event {
+            Some(action_key) => match action_key {
                 EventState { action: a, key: k } => {
                     if *a == KeyboardAction::PRESS || *a == KeyboardAction::REPEAT {
                         if let Some(k) = k {
@@ -150,20 +150,20 @@ impl InputState for GlfwInputState {
     }
 
     fn event(&mut self, event: Option<EventState>) {
-        self.key_action = event;
+        self.event = event;
     }
 
-    fn start(&mut self) -> anyhow::Result<()> {
+    fn on_start(&mut self) -> anyhow::Result<()> {
         Ok(())
     }
 
-    fn next(&mut self) -> anyhow::Result<LoopState> {
+    fn on_next(&mut self) -> anyhow::Result<LoopState> {
         self.clear_key = true;
 
         Ok(LoopState::Continue)
     }
 
-    fn end(&mut self) -> anyhow::Result<()> {
+    fn on_end(&mut self) -> anyhow::Result<()> {
         Ok(())
     }
 }

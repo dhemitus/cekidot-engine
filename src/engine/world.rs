@@ -1,21 +1,23 @@
 use crate::engine::{
+    canvas::RenderableCanvas,
     input::{InputState, glfw_input::capture_event},
     render_loop::{LoopState, RenderLoop},
     window::WindowWrapper,
 };
 use anyhow::Context;
 
-pub struct World<'a, Game, InputGame: InputState> {
-    render_loop: &'a mut RenderLoop<'a, Game, InputGame>,
+pub struct World<'a, Game, InputGame: InputState, CanvasGame: RenderableCanvas> {
+    render_loop: &'a mut RenderLoop<'a, Game, InputGame, CanvasGame>,
     window_wrapper: WindowWrapper<'a>,
 }
 
-impl<'a, Game, InputGame> World<'a, Game, InputGame>
+impl<'a, Game, InputGame, CanvasGame> World<'a, Game, InputGame, CanvasGame>
 where
     InputGame: InputState,
+    CanvasGame: RenderableCanvas,
 {
     pub fn new(
-        render_loop: &'a mut RenderLoop<'a, Game, InputGame>,
+        render_loop: &'a mut RenderLoop<'a, Game, InputGame, CanvasGame>,
         window_wrapper: WindowWrapper<'a>,
     ) -> Self {
         Self {

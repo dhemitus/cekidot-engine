@@ -1,5 +1,6 @@
 pub mod engine;
 
+use crate::engine::canvas::RenderableCanvas;
 use crate::engine::input::InputState;
 use crate::engine::world::World;
 use crate::engine::{
@@ -8,15 +9,16 @@ use crate::engine::{
 };
 use glfw::fail_on_errors;
 
-pub async fn run<'a, Game, InputGame: InputState>(
+pub async fn run<'a, Game, InputGame: InputState, CanvasGame: RenderableCanvas>(
     fps: usize,
     width: usize,
     height: usize,
     title: &str,
     game: &'a mut Game,
     input: &'a mut InputGame,
-    update: UpdateFn<Game, InputGame>,
-    render: RenderFn<Game, InputGame>,
+    canvas: CanvasGame,
+    update: UpdateFn<Game, InputGame, CanvasGame>,
+    render: RenderFn<Game, InputGame, CanvasGame>,
 ) {
     let mut glfw = glfw::init(glfw::fail_on_errors!()).unwrap();
 
@@ -31,7 +33,8 @@ pub async fn run<'a, Game, InputGame: InputState>(
 
     let window_wrapper: WindowWrapper = WindowWrapper::new(&mut glfw, &events, &mut window);
 
-    let mut render_loop = RenderLoop::<Game, InputGame>::new(fps, game, input, update, render);
+    let mut render_loop =
+        RenderLoop::<Game, InputGame, CanvasGame>::new(fps, game, input, canvas, update, render);
 
     let mut world = World::new(&mut render_loop, window_wrapper);
     world.run();
