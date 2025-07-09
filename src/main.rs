@@ -31,6 +31,11 @@ fn update(g: &mut GameOn, i: &mut GlfwInputState) -> Result<LoopState> {
         g.adding += 1;
     }
 
+    if i.is_key_pressed(KeyboardKey::UP) {
+        println!("pressed {:?} {}", KeyboardKey::UP, g.adding);
+        g.adding += 1;
+    }
+
     Ok(LoopState::Continue)
 }
 
