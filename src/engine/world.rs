@@ -1,5 +1,5 @@
 use crate::engine::{
-    input::{InputState, KeyboardKey},
+    input::{InputState, glfw_input::capture_event},
     render_loop::{LoopState, RenderLoop},
     window::WindowWrapper,
 };
@@ -30,7 +30,7 @@ where
         while !self.window_wrapper.is_open() {
             self.window_wrapper.set_poll_events();
 
-            //            self.render_loop.input.handle_event();
+            self.render_loop.input.handle_event();
             let next = self.render_loop.on_loop().context("on loop").unwrap();
 
             if let LoopState::Exit(c) = next {
@@ -40,8 +40,7 @@ where
             }
 
             for (_, event) in glfw::flush_messages(&self.window_wrapper.events()) {
-                //                self.render_loop.input.set_event(&event);
-                self.render_loop.input.get_event(&event);
+                self.render_loop.input.event(capture_event(&event));
 
                 match event {
                     glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) => {
