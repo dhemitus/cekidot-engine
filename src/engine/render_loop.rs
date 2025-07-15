@@ -21,7 +21,7 @@ pub struct RenderLoop<'a, Game, InputGame: InputState, CanvasGame: RenderableCan
     last_time: Instant,
     update_timestep: Duration,
     game: &'a mut Game,
-    pub input: &'a mut InputGame,
+    input: &'a mut InputGame,
     canvas: CanvasGame,
     update: UpdateFn<Game, InputGame, CanvasGame>,
     render: RenderFn<Game, InputGame, CanvasGame>,
@@ -86,10 +86,13 @@ where
         Ok(LoopState::Continue)
     }
 
+    pub fn input(&mut self) -> &mut InputGame {
+        self.input
+    }
+
     pub fn on_resize(&mut self) {
         self.canvas.on_resize();
         //    self.game.resize(100, 100);
-        //todo!()
     }
 
     pub fn on_start(&mut self) -> Result<()> {

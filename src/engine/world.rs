@@ -1,6 +1,6 @@
 use crate::engine::{
     canvas::RenderableCanvas,
-    input::{InputState, glfw_input::capture_event},
+    input::{EventState, InputState, KeyboardAction, KeyboardKey, glfw_input::capture_event},
     render_loop::{LoopState, RenderLoop},
     window::WindowWrapper,
 };
@@ -32,7 +32,7 @@ where
         while !self.window_wrapper.is_open() {
             self.window_wrapper.set_poll_events();
 
-            self.render_loop.input.handle_event();
+            self.render_loop.input().handle_event();
             let next = self.render_loop.on_loop().context("on loop").unwrap();
 
             if let LoopState::Exit(c) = next {
@@ -42,7 +42,24 @@ where
             }
 
             for (_, event) in glfw::flush_messages(&self.window_wrapper.events()) {
-                self.render_loop.input.event(capture_event(&event));
+                let _ev = self.render_loop.input().on_event(&capture_event(&event));
+
+                /*match ev {
+                    Some(action_key) => match action_key {
+                        EventState { action: a, key: k } => {
+                            if *a == KeyboardAction::PRESS && *k == Some(KeyboardKey::ESCAPE) {
+                                self.render_loop.on_end(code).context("on end").unwrap();
+                                code = 0;
+
+                                self.window_wrapper.close();
+                                println!("yes escape");
+                            }
+                            println!("a k {:?} {:?}", a, k);
+                        }
+                        _ => {}
+                    },
+                    None => {}
+                }*/
 
                 match event {
                     glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) => {
@@ -51,7 +68,6 @@ where
 
                         self.window_wrapper.close();
                     }
-
                     glfw::WindowEvent::Pos(..) => {
                         self.render_loop.on_resize();
                         //state.update_surface();

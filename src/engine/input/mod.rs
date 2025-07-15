@@ -74,6 +74,7 @@ pub enum KeyboardAction {
     ELSE,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct EventState {
     pub key: Option<KeyboardKey>,
     pub action: KeyboardAction,
@@ -88,7 +89,8 @@ pub trait KeyboardState {
 
 pub trait InputState: KeyboardState {
     fn handle_event(&mut self);
-    fn event(&mut self, event: Option<EventState>);
+    //fn event(&self) -> &Option<EventState>;
+    fn on_event(&mut self, event: &Option<EventState>) -> &Option<EventState>;
     fn on_start(&mut self) -> Result<()>;
     fn on_next(&mut self) -> Result<LoopState>;
     fn on_end(&mut self) -> Result<()>;

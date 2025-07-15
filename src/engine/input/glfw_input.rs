@@ -94,14 +94,12 @@ pub fn capture_event(event: &WindowEvent) -> Option<EventState> {
     key_action
 }
 
-pub trait GlfwHandleState {}
-
 pub struct GlfwInputState {
     key_down: HashSet<KeyboardKey>,
     key_pressed_update: HashSet<KeyboardKey>,
     key_released_update: HashSet<KeyboardKey>,
     clear_key: bool,
-    pub event: Option<EventState>,
+    event: Option<EventState>,
 }
 
 impl GlfwInputState {
@@ -114,6 +112,10 @@ impl GlfwInputState {
             event: None,
         }
     }
+
+    /*fn on_events(&mut self, event: &'a Option<EventState>) {
+        self.event = event;
+    }*/
 }
 
 impl InputState for GlfwInputState {
@@ -149,8 +151,9 @@ impl InputState for GlfwInputState {
         }
     }
 
-    fn event(&mut self, event: Option<EventState>) {
-        self.event = event;
+    fn on_event(&mut self, event: &Option<EventState>) -> &Option<EventState> {
+        self.event = *event;
+        &self.event
     }
 
     fn on_start(&mut self) -> anyhow::Result<()> {
